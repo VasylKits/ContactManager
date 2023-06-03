@@ -1,0 +1,36 @@
+﻿@model ContactManager.Models.Contact
+
+@{
+    ViewData["Title"] = "Remove Contact";
+}
+
+<h1>Remove Contact</h1>
+
+<h4>Are you sure you want to remove the contact with ID @Model.Id?</h4>
+
+<div class="form-group">
+    <div class="col-md-offset-2 col-md-10">
+        <button type="submit" class="btn btn-danger" id="confirm-remove-btn">Confirm Removal</button>
+        <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('#confirm-remove-btn').click(function () {
+                var contactId = @Model.Id;
+                // Send an AJAX request to remove the contact from the database
+                $.ajax({
+                    url: '/Contacts/RemoveContact',
+                    type: 'POST',
+                    data: { id: contactId },
+                    success: function () {
+                        window.location.href = '/Contacts/Index';
+                    }
+                });
+            });
+        });
+    </script>
+}

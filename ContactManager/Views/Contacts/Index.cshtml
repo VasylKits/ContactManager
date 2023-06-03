@@ -1,0 +1,130 @@
+﻿@model List<ContactManager.Models.Contact>
+
+@{
+    ViewData["Title"] = "Contact Manager";
+}
+
+<h1>Contact Manager</h1>
+
+<form asp-controller="Contacts" asp-action="UploadContacts" method="post" enctype="multipart/form-data">
+    <p>
+        <a class="btn btn-primary" href="/Contacts/Create">Create New Contact</a>
+    </p>
+    <div class="form-group">
+        <label for="file">Upload CSV File:</label>
+        <input type="file" class="form-control-file" id="file" name="file">
+    </div>
+    <button type="submit" class="btn btn-primary">Upload</button>
+</form>
+
+<hr />
+
+<div>
+    <label for="filter">Filter:</label>
+    <input type="text" id="filter" placeholder="Enter filter text" />
+</div>
+
+<table id="contact-table" class="table table-striped">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Date of Birth</th>
+            <th>Married</th>
+            <th>Phone</th>
+            <th>Salary</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var contact in Model)
+        {
+            <tr>
+                <td class="editable" data-column-name="Name">@contact.Name</td>
+                <td class="editable" data-column-name="DateOfBirth">@contact.DateOfBirth.ToShortDateString()</td>
+                <td class="editable" data-column-name="Married">@contact.Married.ToString()</td>
+                <td class="editable" data-column-name="Phone">@contact.Phone</td>
+                <td class="editable" data-column-name="Salary">@contact.Salary.ToString()</td>
+                <td>
+                    <a asp-action="Edit" asp-controller="Contacts" asp-route-id="@contact.Id" class="btn btn-warning btn-sm btn-warning">Edit</a>
+                </td>
+                <td>
+                    <form asp-controller="Contacts" asp-action="Remove" method="post" asp-route-id="@contact.Id">
+                        <input type="submit" value="Remove" class="btn btn-danger btn-sm remove-btn" />
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // Inline Editing
+            $('.editable').on('click', function () {
+                var cell = $(this);
+                var oldValue = cell.text().trim();
+
+                // Create an input element for editing
+                var input = $('<input type="text" class="form-control">').val(oldValue);
+
+                // Replace the cell's content with the input element
+                cell.empty().append(input);
+
+                // Focus on the input element
+                input.focus();
+
+                // Handle input element blur (when focus is lost)
+                input.on('blur', function () {
+                    var newValue = input.val().trim();
+                    var contactId = cell.closest('tr').data('contact-id');
+                    var columnName = cell.data('column-name');
+
+                    if (newValue !== oldValue) {
+                        // Make an AJAX request to update the record in the database
+                        $.ajax({
+                            url: '/Contacts/Update',
+                            method: 'POST',
+                            data: {
+                                id: contactId,
+                                columnName: columnName,
+                                newValue: newValue
+                            },
+                            success: function () {
+                                // Update the cell's content with the new value
+                                cell.text(newValue);
+                            },
+                            error: function () {
+                                // Handle the error if the update fails
+                                alert('An error occurred while updating the record.');
+                                cell.text(oldValue);
+                            }
+                        });
+                    } else {
+                        // If the new value is the same as the old value, revert the cell's content
+                        cell.text(oldValue);
+                    }
+                });
+            });
+            // Remove contact
+            $('.remove-btn').click(function () {
+                var contactId = $(this).data('contact-id');
+                window.location.href = '/Contacts/Remove/' + contactId;
+            });
+
+            // Make an AJAX request to remove the record from the database
+            $.ajax({
+                url: '/Contacts/Remove/' + contactId,
+                method: 'POST',
+                success: function () {
+                    // Remove the row from the table upon successful deletion
+                    row.remove();
+                },
+                error: function () {
+                    // Handle the error if the removal fails
+                    alert('An error occurred while removing the record.');
+                }
+            });
+        });
+                });
+    </script>
+    }
